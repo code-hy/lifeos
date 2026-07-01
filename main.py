@@ -87,10 +87,16 @@ async def ask_orchestrator(payload: QueryPayload):
     """Send a user request to the Executive Orchestrator."""
     try:
         result = await orchestrator.handle_request(payload.query)
+        orchestrator.save_chat_message(payload.query, result)
         return result
     except Exception as e:
         logger.exception("Error processing request")
         raise HTTPException(status_code=500, detail=str(e))
+
+@app.get("/api/chat/history")
+async def get_chat_history():
+    """Retrieve persisted chat message history."""
+    return orchestrator.get_chat_history()
 
 @app.get("/api/approvals")
 async def list_approvals():

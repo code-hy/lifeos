@@ -46,8 +46,64 @@ class ExecutiveOrchestrator:
                 created_at TEXT NOT NULL
             )
         """)
+        # Table to store chat message history
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS chat_messages (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                timestamp TEXT NOT NULL,
+                query TEXT NOT NULL,
+                response TEXT NOT NULL,
+                status TEXT NOT NULL,
+                details TEXT
+            )
+        """)
         conn.commit()
         conn.close()
+
+    def save_chat_message(self, query: str, response_data: dict):
+        try:
+            conn = sqlite3.connect(self.db_path)
+            cursor = conn.cursor()
+            cursor.execute(
+                """
+                INSERT INTO chat_messages (timestamp, query, response, status, details)
+                VALUES (?, ?, ?, ?, ?)
+                """,
+                (
+                    datetime.utcnow().isoformat(),
+                    query,
+                    response_data.get("response", ""),
+                    response_data.get("status", "UNKNOWN"),
+                    json.dumps(response_data) if response_data else "{}"
+                )
+            )
+            conn.commit()
+            conn.close()
+        except Exception as e:
+            logger.error(f"Failed to save chat message: {e}")
+
+    def get_chat_history(self, limit: int = 100) -> list[dict]:
+        try:
+            conn = sqlite3.connect(self.db_path)
+            conn.row_factory = sqlite3.Row
+            cursor = conn.cursor()
+            cursor.execute("SELECT * FROM chat_messages ORDER BY id ASC LIMIT ?", (limit,))
+            rows = cursor.fetchall()
+            conn.close()
+            return [
+                {
+                    "id": r["id"],
+                    "timestamp": r["timestamp"],
+                    "query": r["query"],
+                    "response": r["response"],
+                    "status": r["status"],
+                    "details": json.loads(r["details"]) if r["details"] else {}
+                }
+                for r in rows
+            ]
+        except Exception as e:
+            logger.error(f"Error fetching chat history: {e}")
+            return []
 
     def _save_state(self, approval_id: str, query: str, plan: dict, current_step_id: int, results: dict):
         try:

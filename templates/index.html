@@ -1107,6 +1107,70 @@
             }
         }
 
+        // Fetch persisted chat history from the server
+        async function fetchChatHistory() {
+            try {
+                const res = await fetch('/api/chat/history');
+                const messages = await res.json();
+                const chatHistory = document.getElementById('chat-history');
+                chatHistory.innerHTML = '';
+
+                if (messages.length === 0) {
+                    chatHistory.innerHTML = `
+                        <div class="chat-bubble system">
+                            Welcome to LifeOS. Ask me a question, or use the panel on the left to inject simulated life events.
+                        </div>
+                    `;
+                    return;
+                }
+
+                messages.forEach(msg => {
+                    const details = msg.details || {};
+                    let stepsHtml = '';
+                    if (details.results && Object.keys(details.results).length > 0) {
+                        stepsHtml = `<div class="execution-steps"><h4 style="margin-bottom:4px; font-size:11px;">Plan Executed:</h4>`;
+                        for (let k in details.results) {
+                            const stepRes = details.results[k];
+                            const status = (stepRes.status || 'unknown').toLowerCase();
+                            stepsHtml += `
+                                <div class="step-item">
+                                    <span class="step-status ${status}">${status}</span>
+                                    <span>${k}: ${stepRes.result ? (typeof stepRes.result === 'object' ? JSON.stringify(stepRes.result).substring(0, 50) + '...' : stepRes.result) : stepRes.error || 'Executed'}</span>
+                                </div>
+                            `;
+                        }
+                        stepsHtml += `</div>`;
+                    }
+
+                    // User bubble
+                    chatHistory.innerHTML += `
+                        <div class="chat-bubble user">${msg.query}</div>
+                    `;
+
+                    // System response bubble (only if status is terminal)
+                    if (msg.status !== 'PENDING') {
+                        let extraStyle = '';
+                        let bubbleClass = 'chat-bubble system';
+                        let prefix = '<strong>LifeOS:</strong><br>';
+                        if (msg.status === 'BLOCKED') { extraStyle = 'border-color: var(--danger); background: rgba(255, 23, 68, 0.05);'; prefix = '<strong>Security Blocked:</strong> '; }
+                        else if (msg.status === 'HOLD') { bubbleClass = 'chat-bubble hold'; prefix = '<strong>Security Hold Alert:</strong> '; }
+                        
+                        const response = msg.response || JSON.stringify(msg.details);
+                        chatHistory.innerHTML += `
+                            <div class="${bubbleClass}" style="${extraStyle}">
+                                ${prefix}
+                                ${response.replace(/\n/g, '<br>')}
+                                ${stepsHtml}
+                            </div>
+                        `;
+                    }
+                });
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            } catch (e) {
+                console.error('Failed to load chat history:', e);
+            }
+        }
+
         // Loop Polling (every 3 seconds for active UI updates)
         setInterval(() => {
             fetchApprovals();
@@ -1116,6 +1180,7 @@
         // Initial Load
         fetchStatus();
         fetchMemory();
+        fetchChatHistory();
         fetchApprovals();
         fetchLogs();
 
