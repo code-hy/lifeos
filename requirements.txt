@@ -1,0 +1,11 @@
+google-generativeai
+fastapi
+uvicorn
+pydantic
+chromadb
+sqlalchemy
+typer
+rich
+python-dotenv
+httpx
+jinja2

@@ -1,0 +1,26 @@
+version: '3.8'
+
+services:
+  api:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - CHROMA_DB_HOST=vector-db
+      - CHROMA_DB_PORT=8000
+    env_file:
+      - .env
+    depends_on:
+      - vector-db
+    volumes:
+      - ./data:/app/data
+
+  vector-db:
+    image: chromadb/chroma:latest
+    ports:
+      - "8001:8000"
+    volumes:
+      - chroma-data:/chroma/data
+
+volumes:
+  chroma-data:

@@ -1,0 +1,1124 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>LifeOS - Autonomous Control Center</title>
+    <!-- Google Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800&family=Plus+Jakarta+Sans:wght@300;400;500;600;700;800&family=Fira+Code:wght@400;500&display=swap" rel="stylesheet">
+    
+    <style>
+        :root {
+            --bg-color: #0b0c13;
+            --card-bg: rgba(18, 20, 32, 0.65);
+            --card-border: rgba(255, 255, 255, 0.08);
+            --primary: #4facfe;
+            --primary-glow: rgba(79, 172, 254, 0.4);
+            --secondary: #00f2fe;
+            --accent: #8a2be2;
+            --accent-glow: rgba(138, 43, 226, 0.4);
+            --text-main: #f1f3f9;
+            --text-muted: #8b92b6;
+            --success: #00e676;
+            --warning: #ffb300;
+            --danger: #ff1744;
+            --font-main: 'Plus Jakarta Sans', sans-serif;
+            --font-display: 'Outfit', sans-serif;
+            --font-mono: 'Fira Code', monospace;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        body {
+            font-family: var(--font-main);
+            background-color: var(--bg-color);
+            color: var(--text-main);
+            overflow-x: hidden;
+            background-image: 
+                radial-gradient(circle at 10% 20%, rgba(79, 172, 254, 0.15) 0%, transparent 40%),
+                radial-gradient(circle at 90% 80%, rgba(138, 43, 226, 0.15) 0%, transparent 45%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        /* Scrollbar styling */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: rgba(0, 0, 0, 0.1);
+        }
+        ::-webkit-scrollbar-thumb {
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 4px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: rgba(255, 255, 255, 0.3);
+        }
+
+        header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 20px 40px;
+            border-bottom: 1px solid var(--card-border);
+            backdrop-filter: blur(10px);
+            background: rgba(11, 12, 19, 0.7);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .logo-container {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-family: var(--font-display);
+            font-weight: 800;
+            font-size: 20px;
+            color: #fff;
+            box-shadow: 0 0 20px var(--primary-glow);
+            animation: pulse 3s infinite alternate;
+        }
+
+        @keyframes pulse {
+            0% { box-shadow: 0 0 10px var(--primary-glow); }
+            100% { box-shadow: 0 0 25px rgba(138, 43, 226, 0.6); }
+        }
+
+        header h1 {
+            font-family: var(--font-display);
+            font-size: 24px;
+            font-weight: 700;
+            letter-spacing: -0.5px;
+            background: linear-gradient(to right, #fff, #b8c0e0);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        header p {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+
+        .system-status {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+
+        .status-pill {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            border-radius: 30px;
+            padding: 6px 14px;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background-color: var(--success);
+            box-shadow: 0 0 10px var(--success);
+        }
+
+        .status-dot.active {
+            animation: statusPulse 1.5s infinite;
+        }
+
+        @keyframes statusPulse {
+            0% { transform: scale(0.9); opacity: 0.5; }
+            50% { transform: scale(1.2); opacity: 1; box-shadow: 0 0 12px var(--success); }
+            100% { transform: scale(0.9); opacity: 0.5; }
+        }
+
+        .dashboard-container {
+            display: grid;
+            grid-template-columns: 320px 1fr 360px;
+            gap: 24px;
+            padding: 30px 40px;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+
+        /* Glassmorphic Panel Layout */
+        .panel {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 18px;
+            backdrop-filter: blur(16px);
+            padding: 24px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.3);
+            height: fit-content;
+        }
+
+        .panel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            padding-bottom: 12px;
+        }
+
+        .panel-title {
+            font-family: var(--font-display);
+            font-size: 16px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            color: #fff;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .panel-title i {
+            color: var(--primary);
+        }
+
+        /* Left Panel Styles */
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 12px;
+            font-size: 13px;
+        }
+
+        .info-label {
+            color: var(--text-muted);
+        }
+
+        .info-value {
+            font-weight: 500;
+            color: var(--text-main);
+        }
+
+        .proactive-triggers {
+            margin-top: 25px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .trigger-btn {
+            background: rgba(255, 255, 255, 0.04);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+            border-radius: 12px;
+            padding: 14px;
+            color: #fff;
+            font-weight: 500;
+            text-align: left;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-family: var(--font-main);
+            font-size: 13px;
+        }
+
+        .trigger-btn:hover {
+            background: linear-gradient(135deg, rgba(79, 172, 254, 0.15) 0%, rgba(0, 242, 254, 0.15) 100%);
+            border-color: var(--primary);
+            box-shadow: 0 4px 15px rgba(79, 172, 254, 0.1);
+            transform: translateY(-2px);
+        }
+
+        .trigger-btn i {
+            font-size: 18px;
+            color: var(--secondary);
+        }
+
+        /* Central Panel Chat Console */
+        .chat-console {
+            grid-column: 2;
+            height: calc(100vh - 160px);
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-history {
+            flex-grow: 1;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 16px;
+            padding-right: 8px;
+            margin-bottom: 20px;
+        }
+
+        .chat-bubble {
+            max-width: 85%;
+            padding: 16px 20px;
+            border-radius: 16px;
+            font-size: 14px;
+            line-height: 1.5;
+            position: relative;
+        }
+
+        .chat-bubble.user {
+            background: rgba(79, 172, 254, 0.12);
+            border: 1px solid rgba(79, 172, 254, 0.25);
+            align-self: flex-end;
+            border-top-right-radius: 4px;
+        }
+
+        .chat-bubble.system {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            align-self: flex-start;
+            border-top-left-radius: 4px;
+        }
+
+        .chat-bubble.hold {
+            background: rgba(255, 179, 0, 0.08);
+            border: 1px solid rgba(255, 179, 0, 0.25);
+            align-self: flex-start;
+            border-top-left-radius: 4px;
+            width: 100%;
+        }
+
+        .chat-bubble pre {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 12px;
+            border-radius: 8px;
+            font-family: var(--font-mono);
+            font-size: 12px;
+            overflow-x: auto;
+            margin-top: 10px;
+            border: 1px solid rgba(255, 255, 255, 0.05);
+        }
+
+        .execution-steps {
+            margin-top: 12px;
+            padding: 10px 14px;
+            background: rgba(0, 0, 0, 0.2);
+            border-radius: 10px;
+            border-left: 3px solid var(--primary);
+            font-size: 12px;
+        }
+
+        .step-item {
+            margin-bottom: 6px;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .step-item:last-child {
+            margin-bottom: 0;
+        }
+
+        .step-status {
+            font-weight: 600;
+            font-size: 10px;
+            padding: 2px 6px;
+            border-radius: 4px;
+            text-transform: uppercase;
+        }
+
+        .step-status.success { background: rgba(0, 230, 118, 0.15); color: var(--success); }
+        .step-status.hold { background: rgba(255, 179, 0, 0.15); color: var(--warning); }
+        .step-status.error { background: rgba(255, 23, 68, 0.15); color: var(--danger); }
+
+        .chat-input-container {
+            display: flex;
+            gap: 12px;
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            padding: 8px 12px;
+            align-items: center;
+        }
+
+        .chat-input {
+            flex-grow: 1;
+            background: transparent;
+            border: none;
+            color: #fff;
+            font-family: var(--font-main);
+            font-size: 14px;
+            outline: none;
+            padding: 8px;
+        }
+
+        .chat-input::placeholder {
+            color: var(--text-muted);
+        }
+
+        .chat-send-btn {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--accent) 100%);
+            border: none;
+            border-radius: 12px;
+            width: 40px;
+            height: 40px;
+            color: #fff;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            box-shadow: 0 0 10px var(--primary-glow);
+        }
+
+        .chat-send-btn:hover {
+            transform: scale(1.05);
+            box-shadow: 0 0 15px rgba(79, 172, 254, 0.7);
+        }
+
+        /* Approvals Sub-Panel */
+        .approval-card {
+            background: rgba(255, 179, 0, 0.05);
+            border: 1px solid rgba(255, 179, 0, 0.25);
+            border-radius: 12px;
+            padding: 16px;
+            margin-top: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+
+        .approval-info {
+            font-size: 13px;
+        }
+
+        .approval-title {
+            font-weight: 600;
+            color: var(--warning);
+            margin-bottom: 4px;
+        }
+
+        .approval-actions {
+            display: flex;
+            gap: 12px;
+        }
+
+        .approval-btn {
+            flex: 1;
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            font-family: var(--font-main);
+            border: none;
+            text-align: center;
+        }
+
+        .approval-btn.approve {
+            background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+            color: #0b0c13;
+        }
+
+        .approval-btn.reject {
+            background: rgba(255, 23, 68, 0.1);
+            border: 1px solid var(--danger);
+            color: var(--danger);
+        }
+
+        .approval-btn:hover {
+            transform: translateY(-2px);
+        }
+
+        /* Right Panel Styles (Memory / Logs) */
+        .memory-section {
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            max-height: 250px;
+            overflow-y: auto;
+            margin-bottom: 20px;
+        }
+
+        .memory-item {
+            background: rgba(255, 255, 255, 0.03);
+            border: 1px solid var(--card-border);
+            border-radius: 10px;
+            padding: 10px 14px;
+            font-size: 12px;
+        }
+
+        .memory-key {
+            font-weight: 600;
+            color: var(--primary);
+        }
+
+        .memory-value {
+            color: var(--text-main);
+            margin-top: 4px;
+        }
+
+        .memory-form {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        .memory-input {
+            background: rgba(0, 0, 0, 0.2);
+            border: 1px solid var(--card-border);
+            border-radius: 8px;
+            padding: 8px 12px;
+            color: #fff;
+            font-size: 12px;
+            outline: none;
+        }
+
+        .memory-submit-btn {
+            background: rgba(255, 255, 255, 0.05);
+            border: 1px solid var(--card-border);
+            color: #fff;
+            border-radius: 8px;
+            padding: 8px;
+            font-size: 12px;
+            cursor: pointer;
+            font-weight: 500;
+        }
+
+        .memory-submit-btn:hover {
+            background: var(--primary);
+            color: #000;
+        }
+
+        .terminal-panel {
+            flex-grow: 1;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .terminal-log {
+            flex-grow: 1;
+            background: rgba(0, 0, 0, 0.4);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            padding: 14px;
+            font-family: var(--font-mono);
+            font-size: 11px;
+            color: #9cdcfe;
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+        }
+
+        .log-entry {
+            line-height: 1.4;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.02);
+            padding-bottom: 4px;
+        }
+
+        .log-time { color: var(--text-muted); }
+        .log-tag { color: var(--accent); font-weight: 600; }
+        .log-tag.SUCCESS { color: var(--success); }
+        .log-tag.HOLD { color: var(--warning); }
+        .log-tag.BLOCKED { color: var(--danger); }
+        .log-tag.ERROR { color: var(--danger); }
+
+        .spinner {
+            display: inline-block;
+            width: 14px;
+            height: 14px;
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 50%;
+            border-top-color: #fff;
+            animation: spin 1s ease-in-out infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        /* Responsive Design */
+        @media (max-width: 1200px) {
+            .dashboard-container {
+                grid-template-columns: 1fr;
+            }
+            .chat-console {
+                grid-column: 1;
+                height: 500px;
+            }
+        }
+    </style>
+    <!-- Lucide Icons for clean look -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+</head>
+<body>
+
+    <header>
+        <div class="logo-container">
+            <div class="logo-icon">Ω</div>
+            <div>
+                <h1>LifeOS</h1>
+                <p>Autonomous Agentic Operating System</p>
+            </div>
+        </div>
+        
+        <div class="system-status">
+            <div class="status-pill">
+                <span class="status-dot active"></span>
+                <span>Proactive Monitor: <strong id="proactive-status-text">Active</strong></span>
+            </div>
+            <div class="status-pill">
+                <span>Model: <strong id="model-name-text">Gemini 2.0 Flash</strong></span>
+            </div>
+        </div>
+    </header>
+
+    <div class="dashboard-container">
+        
+        <!-- Left Panel: Controller / Triggers -->
+        <div class="panel">
+            <div class="panel-header">
+                <div class="panel-title"><i data-lucide="sliders"></i> Controls</div>
+            </div>
+            <div style="display: flex; flex-direction: column; gap: 4px;">
+                <div class="info-row">
+                    <span class="info-label">Memory Engine</span>
+                    <span class="info-value" id="memory-engine-status">ChromaDB</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">API Status</span>
+                    <span class="info-value" style="color: var(--success);" id="api-status-text">CONNECTED</span>
+                </div>
+                <div class="info-row">
+                    <span class="info-label">Pending Alerts</span>
+                    <span class="info-value" id="pending-alerts-count">0</span>
+                </div>
+            </div>
+
+            <div class="proactive-triggers">
+                <h3 style="font-size: 13px; font-family: var(--font-display); text-transform: uppercase; color: var(--text-muted); letter-spacing: 0.5px;">Trigger Proactive Events</h3>
+                <p style="font-size: 11px; color: var(--text-muted); margin-bottom: 8px;">Simulate real-time external events to demonstrate the Antigravity proactive reasoning loop.</p>
+                
+                <button class="trigger-btn" onclick="triggerProactiveEvent('flight_delay')">
+                    <i data-lucide="plane"></i>
+                    <div>
+                        <div style="font-weight: 600;">Flight Delay Notification</div>
+                        <div style="font-size: 10px; color: var(--text-muted);">UA102 SFO Arrival Delay</div>
+                    </div>
+                </button>
+
+                <button class="trigger-btn" onclick="triggerProactiveEvent('bill_spike')">
+                    <i data-lucide="zap"></i>
+                    <div>
+                        <div style="font-weight: 600;">Utility Bill Alert</div>
+                        <div style="font-size: 10px; color: var(--text-muted);">Power Bill Increase (150%)</div>
+                    </div>
+                </button>
+
+                <button class="trigger-btn" onclick="triggerProactiveEvent('workout_reminder')">
+                    <i data-lucide="activity"></i>
+                    <div>
+                        <div style="font-weight: 600;">Health Routine Trigger</div>
+                        <div style="font-size: 10px; color: var(--text-muted);">Sync physical stats</div>
+                    </div>
+                </button>
+            </div>
+        </div>
+
+        <!-- Center Panel: Chat Console & Active Logs -->
+        <div class="panel chat-console">
+            <div class="panel-header">
+                <div class="panel-title"><i data-lucide="terminal"></i> Console</div>
+                <span style="font-size: 12px; color: var(--text-muted);">Interactive Agent Loop</span>
+            </div>
+
+            <div class="chat-history" id="chat-history">
+                <div class="chat-bubble system">
+                    Welcome to LifeOS. Ask me a question, or use the panel on the left to inject simulated life events.
+                </div>
+            </div>
+
+            <div id="pending-approvals-area">
+                <!-- Dynamic pending approval cards will appear here -->
+            </div>
+
+            <div class="chat-input-container">
+                <input type="text" class="chat-input" id="user-input" placeholder="Query LifeOS (e.g. 'What's my checkings balance?')..." onkeydown="if(event.key === 'Enter') sendQuery()">
+                <button class="chat-send-btn" onclick="sendQuery()"><i data-lucide="send"></i></button>
+            </div>
+        </div>
+
+        <!-- Right Panel: Memory Bank & Audit Logs -->
+        <div class="panel" style="grid-column: 3;">
+            <div class="panel-header">
+                <div class="panel-title"><i data-lucide="brain"></i> Memory Bank</div>
+            </div>
+            
+            <div class="memory-section" id="memory-list">
+                <!-- Memory items dynamic -->
+                <div class="memory-item">No preferences stored yet.</div>
+            </div>
+
+            <div class="memory-form">
+                <input type="text" class="memory-input" id="memory-key" placeholder="Key (e.g., favorite_airline)">
+                <input type="text" class="memory-input" id="memory-val" placeholder="Value (e.g., United Airlines)">
+                <button class="memory-submit-btn" onclick="saveMemory()">Store Preference</button>
+            </div>
+
+            <div class="terminal-panel">
+                <div class="panel-header" style="margin-top: 15px; margin-bottom: 10px; border-bottom: none; padding-bottom: 0;">
+                    <div class="panel-title" style="font-size: 14px;"><i data-lucide="shield-check"></i> Audit & Execution Logs</div>
+                </div>
+                <div class="terminal-log" id="terminal-log">
+                    <!-- Logs dynamic -->
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <script>
+        // Init Lucide Icons
+        lucide.createIcons();
+
+        // Helper to format timestamps
+        function formatTime(isoStr) {
+            const d = new Date(isoStr);
+            return d.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', second: '2-digit' });
+        }
+
+        // Track last seen proactive log ID so we can surface new results in the chat console
+        let lastSeenProactiveId = 0;
+
+        // Display a completed proactive event result in the chat console
+        function displayProactiveResult(log) {
+            const chatHistory = document.getElementById('chat-history');
+            const response = log.response || 'No response text.';
+            const details = log.details || {};
+            const results = details.results || {};
+
+            let stepsHtml = '';
+            if (Object.keys(results).length > 0) {
+                stepsHtml = `<div class="execution-steps"><h4 style="margin-bottom:4px; font-size:11px;">Autonomous Plan Steps:</h4>`;
+                for (let k in results) {
+                    const stepRes = results[k];
+                    const status = (stepRes.status || 'unknown').toLowerCase();
+                    stepsHtml += `
+                        <div class="step-item">
+                            <span class="step-status ${status}">${status}</span>
+                            <span>${k}: ${stepRes.result ? (typeof stepRes.result === 'object' ? JSON.stringify(stepRes.result).substring(0, 50) + '...' : stepRes.result) : stepRes.error || 'Executed'}</span>
+                        </div>
+                    `;
+                }
+                stepsHtml += `</div>`;
+            }
+
+            const eventLabels = { flight_delay: 'Flight Delay Detected', bill_spike: 'Utility Bill Spike Alert', workout_reminder: 'Health Routine Trigger' };
+
+            chatHistory.innerHTML += `
+                <div class="chat-bubble system" style="border-color: var(--accent); border-left: 3px solid var(--accent);">
+                    <strong><i data-lucide="zap" style="width:14px;height:14px;display:inline-block;vertical-align:middle;"></i> LifeOS (Autonomous) - ${eventLabels[log.event_type] || log.event_type}:</strong><br>
+                    ${response.replace(/\n/g, '<br>')}
+                    ${stepsHtml}
+                </div>
+            `;
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+            lucide.createIcons();
+        }
+
+        // Fetch System Status
+        async function fetchStatus() {
+            try {
+                const res = await fetch('/api/status');
+                const data = await res.json();
+                document.getElementById('proactive-status-text').innerText = data.proactive_loop_active ? 'Active' : 'Inactive';
+                document.getElementById('model-name-text').innerText = data.gemini_model;
+                document.getElementById('memory-engine-status').innerText = data.chroma_active ? 'ChromaDB' : 'Local Fallback';
+                document.getElementById('api-status-text').innerText = 'CONNECTED';
+                document.getElementById('api-status-text').style.color = 'var(--success)';
+            } catch (e) {
+                console.error(e);
+                document.getElementById('api-status-text').innerText = 'DISCONNECTED';
+                document.getElementById('api-status-text').style.color = 'var(--danger)';
+            }
+        }
+
+        // Fetch User Preferences (Memory)
+        async function fetchMemory() {
+            try {
+                const res = await fetch('/api/memory');
+                const data = await res.json();
+                const container = document.getElementById('memory-list');
+                
+                if (data.length === 0) {
+                    container.innerHTML = '<div class="memory-item">No preferences stored.</div>';
+                    return;
+                }
+                
+                container.innerHTML = data.map(item => `
+                    <div class="memory-item">
+                        <span class="memory-key">${item.key}</span>
+                        <div class="memory-value">${item.value}</div>
+                    </div>
+                `).join('');
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Save User Preference
+        async function saveMemory() {
+            const key = document.getElementById('memory-key').value.trim();
+            const val = document.getElementById('memory-val').value.trim();
+            if (!key || !val) return;
+            
+            try {
+                await fetch('/api/memory', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ key, value: val })
+                });
+                document.getElementById('memory-key').value = '';
+                document.getElementById('memory-val').value = '';
+                fetchMemory();
+                fetchLogs();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Fetch Security & Proactive Logs
+        async function fetchLogs() {
+            try {
+                // Fetch security logs
+                const secRes = await fetch('/api/security/logs');
+                const secLogs = await secRes.json();
+                
+                // Fetch proactive logs
+                const proRes = await fetch('/api/proactive/logs');
+                const proLogs = await proRes.json();
+
+                // Check for new completed proactive events to surface in chat
+                if (proLogs.length > 0) {
+                    // proLogs is sorted DESC (newest first); track highest seen ID
+                    const newestId = proLogs[0].id;
+                    if (lastSeenProactiveId === 0) {
+                        // Initial load — just record latest without displaying
+                        lastSeenProactiveId = newestId;
+                    } else if (newestId > lastSeenProactiveId) {
+                        // New log(s) appeared — display completed ones
+                        // Iterate oldest-first to find ones newer than our last seen
+                        for (let i = proLogs.length - 1; i >= 0; i--) {
+                            const log = proLogs[i];
+                            if (log.id > lastSeenProactiveId) {
+                                if (log.status === "SUCCESS" || log.status === "HOLD" || log.status === "ERROR" || log.status === "BLOCKED") {
+                                    displayProactiveResult(log);
+                                }
+                            }
+                        }
+                        lastSeenProactiveId = newestId;
+                    }
+                }
+
+                const logContainer = document.getElementById('terminal-log');
+                
+                // Combine and sort
+                let allLogs = [];
+                secLogs.forEach(l => {
+                    allLogs.push({
+                        time: l.timestamp,
+                        type: 'SECURITY',
+                        tag: l.event_type,
+                        text: l.detail
+                    });
+                });
+                proLogs.forEach(l => {
+                    allLogs.push({
+                        time: l.timestamp,
+                        type: 'PROACTIVE',
+                        tag: l.status,
+                        text: `[${l.event_type.toUpperCase()}] ${l.query}`
+                    });
+                });
+
+                allLogs.sort((a,b) => new Date(b.time) - new Date(a.time));
+
+                if (allLogs.length === 0) {
+                    logContainer.innerHTML = '<div class="log-entry">Waiting for events...</div>';
+                    return;
+                }
+
+                logContainer.innerHTML = allLogs.slice(0, 30).map(l => `
+                    <div class="log-entry">
+                        <span class="log-time">[${formatTime(l.time)}]</span>
+                        <span class="log-tag ${l.tag}">${l.type} - ${l.tag}</span>: 
+                        <span>${l.text}</span>
+                    </div>
+                `).join('');
+                
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Fetch Pending Approvals
+        async function fetchApprovals() {
+            try {
+                const res = await fetch('/api/approvals');
+                const approvals = await res.json();
+                
+                document.getElementById('pending-alerts-count').innerText = approvals.length;
+                
+                const container = document.getElementById('pending-approvals-area');
+                if (approvals.length === 0) {
+                    container.innerHTML = '';
+                    return;
+                }
+                
+                container.innerHTML = approvals.map(appr => `
+                    <div class="approval-card" id="card-${appr.id}">
+                        <div class="approval-info">
+                            <div class="approval-title"><i data-lucide="shield-alert" style="display:inline-block; vertical-align:middle; width:14px; height:14px; margin-right:4px;"></i> SECURITY GUARD HOLD</div>
+                            <div style="font-size:12px; color:var(--text-main); margin-top:5px;">
+                                Tool Call: <strong>${appr.tool_name}</strong>
+                            </div>
+                            <pre style="margin-top:6px;">${JSON.stringify(appr.parameters, null, 2)}</pre>
+                            <div style="font-size:11px; color:var(--text-muted); margin-top:8px;">
+                                Approval ID: ${appr.id.substring(0,8)}...
+                            </div>
+                        </div>
+                        <div class="approval-actions">
+                            <button class="approval-btn approve" onclick="submitApproval('${appr.id}', true)">Approve Call</button>
+                            <button class="approval-btn reject" onclick="submitApproval('${appr.id}', false)">Deny</button>
+                        </div>
+                    </div>
+                `).join('');
+                
+                lucide.createIcons();
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Trigger Proactive Event
+        async function triggerProactiveEvent(eventType) {
+            try {
+                const chatHistory = document.getElementById('chat-history');
+                const eventText = eventType === 'flight_delay' ? 'Flight Delay SFO UA102' : 
+                                  eventType === 'bill_spike' ? 'Utility Bill Spike ($452)' : 'Sync health tracker metrics';
+                                  
+                chatHistory.innerHTML += `
+                    <div class="chat-bubble user" style="border-color: var(--accent); background: rgba(138, 43, 226, 0.12);">
+                        ⚡ <em>System injected event: ${eventText}</em>
+                    </div>
+                `;
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+
+                await fetch('/api/proactive/trigger', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ event_type: eventType })
+                });
+
+                // Instantly poll logs and approvals
+                setTimeout(() => {
+                    fetchLogs();
+                    fetchApprovals();
+                }, 1000);
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Submit Approval decision
+        async function submitApproval(approvalId, approve) {
+            const card = document.getElementById(`card-${approvalId}`);
+            if (card) {
+                card.innerHTML = `
+                    <div style="text-align: center; padding: 10px;">
+                        <span class="spinner"></span> Resuming plan execution...
+                    </div>
+                `;
+            }
+            
+            try {
+                const res = await fetch(`/api/approvals/${approvalId}/decide`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ approve: approve })
+                });
+                const data = await res.json();
+                
+                // Fetch updates
+                fetchApprovals();
+                fetchLogs();
+                fetchMemory();
+                
+                // Append final result of resume to chat
+                const chatHistory = document.getElementById('chat-history');
+                if (approve && data.result) {
+                    const finalResponse = data.result.response || JSON.stringify(data.result);
+                    
+                    // Generate list of steps if execution steps results are available
+                    let stepsHtml = "";
+                    if (data.result.results) {
+                        stepsHtml = `<div class="execution-steps"><h4 style="margin-bottom:4px; font-size:11px;">Resumed Execution Plan:</h4>`;
+                        for (let k in data.result.results) {
+                            const stepRes = data.result.results[k];
+                            const status = stepRes.status.toLowerCase();
+                            stepsHtml += `
+                                <div class="step-item">
+                                    <span class="step-status ${status}">${status}</span>
+                                    <span>${k}: ${stepRes.result ? (typeof stepRes.result === 'object' ? JSON.stringify(stepRes.result).substring(0, 50) + '...' : stepRes.result) : stepRes.error || 'Executed'}</span>
+                                </div>
+                            `;
+                        }
+                        stepsHtml += `</div>`;
+                    }
+
+                    chatHistory.innerHTML += `
+                        <div class="chat-bubble system">
+                            <strong>LifeOS (Resumed):</strong><br>
+                            ${finalResponse.replace(/\n/g, '<br>')}
+                            ${stepsHtml}
+                        </div>
+                    `;
+                } else {
+                    chatHistory.innerHTML += `
+                        <div class="chat-bubble system" style="border-color: var(--danger); background: rgba(255, 23, 68, 0.05);">
+                            Action rejected. Stopped plan execution.
+                        </div>
+                    `;
+                }
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+                
+            } catch (e) {
+                console.error(e);
+            }
+        }
+
+        // Send Custom Command Query
+        async function sendQuery() {
+            const input = document.getElementById('user-input');
+            const query = input.value.trim();
+            if (!query) return;
+
+            input.value = '';
+            
+            const chatHistory = document.getElementById('chat-history');
+            chatHistory.innerHTML += `
+                <div class="chat-bubble user">
+                    ${query}
+                </div>
+            `;
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+
+            // Loading indicator
+            const loadingBubble = document.createElement('div');
+            loadingBubble.className = 'chat-bubble system';
+            loadingBubble.innerHTML = '<span class="spinner"></span> Thinking...';
+            chatHistory.appendChild(loadingBubble);
+            chatHistory.scrollTop = chatHistory.scrollHeight;
+
+            try {
+                const res = await fetch('/api/ask', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ query: query })
+                });
+                const data = await res.json();
+                
+                chatHistory.removeChild(loadingBubble);
+                
+                if (data.status === 'BLOCKED') {
+                    chatHistory.innerHTML += `
+                        <div class="chat-bubble system" style="border-color: var(--danger); background: rgba(255, 23, 68, 0.05);">
+                            <strong>Security Blocked:</strong> ${data.response}
+                        </div>
+                    `;
+                } else if (data.status === 'HOLD') {
+                    // Tool call is on hold
+                    chatHistory.innerHTML += `
+                        <div class="chat-bubble hold">
+                            <strong>Security Hold Alert:</strong> ${data.response}<br>
+                            Please decide below or in the approvals list.
+                        </div>
+                    `;
+                    // Instantly fetch approvals
+                    fetchApprovals();
+                } else {
+                    // Success, display result
+                    let stepsHtml = "";
+                    if (data.results) {
+                        stepsHtml = `<div class="execution-steps"><h4 style="margin-bottom:4px; font-size:11px;">Plan Executed:</h4>`;
+                        for (let k in data.results) {
+                            const stepRes = data.results[k];
+                            const status = stepRes.status.toLowerCase();
+                            stepsHtml += `
+                                <div class="step-item">
+                                    <span class="step-status ${status}">${status}</span>
+                                    <span>${k}: ${stepRes.result ? (typeof stepRes.result === 'object' ? JSON.stringify(stepRes.result).substring(0, 50) + '...' : stepRes.result) : stepRes.error || 'Executed'}</span>
+                                </div>
+                            `;
+                        }
+                        stepsHtml += `</div>`;
+                    }
+                    
+                    chatHistory.innerHTML += `
+                        <div class="chat-bubble system">
+                            <strong>LifeOS:</strong><br>
+                            ${data.response.replace(/\n/g, '<br>')}
+                            ${stepsHtml}
+                        </div>
+                    `;
+                }
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+                
+                // Refresh data
+                fetchMemory();
+                fetchLogs();
+                
+            } catch (e) {
+                console.error(e);
+                chatHistory.removeChild(loadingBubble);
+                chatHistory.innerHTML += `
+                    <div class="chat-bubble system" style="border-color: var(--danger); background: rgba(255, 23, 68, 0.05);">
+                        Error executing query: ${e.message}
+                    </div>
+                `;
+                chatHistory.scrollTop = chatHistory.scrollHeight;
+            }
+        }
+
+        // Loop Polling (every 3 seconds for active UI updates)
+        setInterval(() => {
+            fetchApprovals();
+            fetchLogs();
+        }, 3000);
+
+        // Initial Load
+        fetchStatus();
+        fetchMemory();
+        fetchApprovals();
+        fetchLogs();
+
+    </script>
+</body>
+</html>
