@@ -160,6 +160,36 @@ class Planner:
                 "args": {},
                 "description": "Analyze bill spike and recommend cheaper providers."
             })
+        elif any(w in query_lower for w in ["weather", "forecast", "temperature"]):
+            # Extract city if mentioned, default to current location
+            city = "New York"
+            import re
+            m = re.search(r'\b(?:in|for|at)\s+([A-Za-z\s]+?)(?:\?|$|\.)', query)
+            if m:
+                city = m.group(1).strip()
+            steps.append({
+                "step_id": 1,
+                "type": "tool",
+                "tool_name": "get_forecast",
+                "args": {"city": city},
+                "description": f"Fetch weather forecast for {city}."
+            })
+        elif any(w in query_lower for w in ["search", "look up", "find", "what is", "who is", "tell me about"]):
+            # Extract the search query after the trigger word
+            search_query = query
+            import re
+            for trigger in ["search for ", "search ", "look up ", "find ", "what is ", "who is ", "tell me about "]:
+                if trigger in query_lower:
+                    idx = query_lower.index(trigger) + len(trigger)
+                    search_query = query[idx:].strip().rstrip("?.")
+                    break
+            steps.append({
+                "step_id": 1,
+                "type": "tool",
+                "tool_name": "search_web",
+                "args": {"query": search_query},
+                "description": f"Search the web for '{search_query}'."
+            })
         elif "day" in query_lower or "schedule" in query_lower or "calendar" in query_lower:
             steps.append({
                 "step_id": 1,
